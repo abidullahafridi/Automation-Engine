@@ -1,0 +1,15 @@
+{
+  "name": "api",
+  "type": "server",
+  "description": "Primary Express API runtime.",
+  "internalDependencies": ["eslint-config", "logging", "tsconfig", "types"],
+  "externalDependencies": ["dotenv", "express", "mongoose", "zod"],
+  "capabilities": ["http-api", "health", "mongodb-integration"],
+  "tasks": {
+    "dev": { "command": "pnpm run dev", "environment": ["API_HOST", "API_PORT", "WEB_ORIGIN", "MONGODB_URI"], "cache": false },
+    "build": { "command": "pnpm run build", "outputs": ["dist"], "cache": true },
+    "test": { "command": "pnpm test", "cache": false },
+    "lint": { "command": "pnpm run lint", "cache": false },
+    "typecheck": { "command": "pnpm run typecheck", "cache": false }
+  }
+}

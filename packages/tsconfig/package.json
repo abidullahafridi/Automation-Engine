@@ -1,0 +1,11 @@
+{
+  "name": "@workspace/tsconfig",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    "./base.json": "./base.json",
+    "./node.json": "./node.json",
+    "./next.json": "./next.json"
+  }
+}

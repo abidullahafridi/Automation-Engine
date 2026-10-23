@@ -1,0 +1,252 @@
+{
+  "version": 1,
+  "foundation": {
+    "name": "monorepo-foundation",
+    "projectManifest": "project.json",
+    "projectRoots": {
+      "apps": "app",
+      "servers": "server",
+      "packages": "package",
+      "prebuilt": "prebuilt"
+    },
+    "allowedProjectTypesByRoot": {
+      "apps": ["app"],
+      "servers": ["server"],
+      "packages": ["package", "config"],
+      "prebuilt": ["prebuilt"]
+    },
+    "requiredRoots": ["apps", "servers", "packages", "prebuilt", "codebase", "enablers", ".agent", ".project", ".github"],
+    "requiredFiles": ["AGENTS.md", "CLAUDE.md", ".editorconfig", ".gitattributes", "architecture.yaml", "commitlint.config.mjs", "lint-staged.config.mjs", "package.json", "pnpm-workspace.yaml", "pnpm-lock.yaml"],
+    "disallowedOrchestrators": ["turbo", "turborepo", "nx", "lerna"],
+    "ignoredDirectories": [".git", ".next", ".repo-cache", "node_modules", "dist", "build", "coverage"]
+  },
+  "workspaceModel": {
+    "repositoryIsWorkspace": true,
+    "mandatoryProjectNamespace": false,
+    "defaultUnits": {
+      "app": "apps/web",
+      "server": "servers/api"
+    },
+    "additionalUnits": "when-required"
+  },
+  "growthModel": {
+    "principle": "everything-available-nothing-unnecessarily-imposed",
+    "progression": ["simple", "modular", "bounded", "scalable", "distributed-when-justified", "platform-when-justified"],
+    "categorizationRule": "meaningful-ownership-or-growth",
+    "commonFileCountHeuristic": 3,
+    "fileCountIsMandatoryThreshold": false
+  },
+  "toolingModel": {
+    "principle": "custom-orchestration-standard-engines",
+    "controlPlaneOwns": ["discovery", "dependency-graph", "execution-planning", "task-orchestration", "caching", "repository-policy", "result-normalization", "cli"],
+    "standardEngines": {
+      "packageManagement": "pnpm",
+      "typescript": "tsc",
+      "lint": "eslint",
+      "tests": "project-declared-runner",
+      "dependencySecurity": "pnpm-audit",
+      "secretDetection": "trufflehog"
+    }
+  },
+  "featureModel": {
+    "ownership": "feature-first",
+    "growth": "progressive",
+    "serverLayout": "flat-files-by-default",
+    "optionalServerFileRoles": ["route", "controller", "service", "repository", "validation", "model", "integration"],
+    "domainDirectory": "domain",
+    "domainFileRoles": ["entity", "rules", "policy", "calculations", "commands", "queries", "events", "constants"],
+    "serverFeatureRoot": "features",
+    "serverFeatureRegistrationFile": "bootstrap/create-app.ts",
+    "serverRouteFileSuffix": ".route.ts",
+    "serverFeatureLayers": {
+      "strategy": "progressive-categorized-when-justified",
+      "publicEntry": "index.ts",
+      "optional": {
+        "routes": "HTTP routing and feature composition",
+        "controllers": "HTTP-facing request and response orchestration",
+        "services": "application operations and coordination",
+        "domain": "framework-independent domain concepts and rules",
+        "repositories": "feature persistence operations",
+        "validations": "feature input and contract validation",
+        "models": "feature persistence models",
+        "integrations": "feature-specific external system adapters",
+        "tests": "feature behavior and boundary verification"
+      }
+    }
+  },
+  "boundaries": {
+    "packagesCannotImport": ["apps", "servers", "prebuilt"],
+    "workspaceUnitCannotImport": {
+      "app": ["servers", "prebuilt"],
+      "server": ["apps", "prebuilt"],
+      "package": ["apps", "servers", "prebuilt"]
+    },
+    "domainCannotImportSegments": ["controllers", "routes", "models"],
+    "domainCannotImportFileRoles": ["route", "controller", "service", "repository", "validation", "model", "integration"],
+    "domainCannotImportPackages": ["express", "mongoose", "next", "redis"],
+    "serviceCannotImportSegments": ["routes", "controllers", "ui", "components"],
+    "serviceCannotImportFileRoles": ["route", "controller", "model"],
+    "uiSegments": ["components", "ui"],
+    "persistenceSegments": ["models", "persistence", "repositories"],
+    "persistenceFileRoles": ["model", "repository"],
+    "serverDisallowedSegments": ["observability"]
+  },
+  "typescript": {
+    "disallowExplicitAny": true,
+    "forbiddenCompilerOptions": ["baseUrl", "ignoreDeprecations"],
+    "requiredTypeBoundaryProjectTypes": ["app", "server"],
+    "sharedConfigProject": "tsconfig",
+    "policyConfigFile": "base.json",
+    "presetConfigFiles": ["node.json", "next.json"],
+    "approvedExtendsByProjectType": {
+      "app": "@workspace/tsconfig/next.json",
+      "server": "@workspace/tsconfig/node.json",
+      "package": "@workspace/tsconfig/node.json"
+    },
+    "requiredCompilerOptions": [
+      "strict",
+      "noImplicitAny",
+      "strictNullChecks",
+      "noImplicitReturns",
+      "noImplicitOverride",
+      "noUncheckedIndexedAccess",
+      "exactOptionalPropertyTypes",
+      "useUnknownInCatchVariables"
+    ]
+  },
+  "configuration": {
+    "environmentValidationFile": "validation/env.validation.ts",
+    "forbidDefaultsInEnvironmentValidation": true,
+    "validationPackages": ["zod"]
+  },
+  "uiComposition": {
+    "packageProject": "ui",
+    "registryFirst": true,
+    "registryConfig": "components.json",
+    "registryCliPackage": "shadcn",
+    "registryCliVersion": "4.20.0",
+    "registryAddScript": "ui:add",
+    "registryAddAllScript": "ui:add:all",
+    "registryAliases": {
+      "components": "#ui/components",
+      "utils": "#ui/utilities",
+      "ui": "#ui/primitives",
+      "lib": "#ui",
+      "hooks": "#ui/hooks"
+    },
+    "registryCatalogItems": [
+      "accordion", "alert", "alert-dialog", "aspect-ratio", "avatar", "badge", "breadcrumb",
+      "button", "button-group", "calendar", "card", "carousel", "chart", "checkbox", "collapsible",
+      "command", "context-menu", "dialog", "drawer", "dropdown-menu", "empty", "field", "form",
+      "hover-card", "input", "input-group", "input-otp", "item", "kbd", "label", "menubar",
+      "navigation-menu", "pagination", "popover", "progress", "radio-group", "resizable",
+      "scroll-area", "select", "separator", "sheet", "sidebar", "skeleton", "slider", "sonner",
+      "spinner", "switch", "table", "tabs", "textarea", "toggle", "toggle-group", "tooltip"
+    ],
+    "registryUnavailableItems": ["attachment", "bubble", "combobox", "direction", "marker", "message", "message-scroller", "native-select"],
+    "primitiveRoot": "src/primitives",
+    "genericRoots": ["src/components", "src/compositions"],
+    "genericFiles": [],
+    "applicationRoots": [],
+    "appForbiddenGenericRoots": ["components/ui", "components/layout", "components/feedback"],
+    "featureRoot": "features",
+    "shadcnPrimitiveNames": [
+      "accordion", "alert", "alert-dialog", "aspect-ratio", "avatar", "badge", "breadcrumb",
+      "button", "button-group", "calendar", "card", "carousel", "chart", "checkbox", "collapsible",
+      "command", "context-menu", "dialog", "drawer", "dropdown-menu", "empty", "field", "form",
+      "hover-card", "input", "input-group", "input-otp", "item", "kbd", "label", "menubar",
+      "navigation-menu", "pagination", "popover", "progress", "radio-group", "resizable",
+      "scroll-area", "select", "separator", "sheet", "sidebar", "skeleton", "slider", "sonner",
+      "spinner", "switch", "table", "tabs", "textarea", "toggle", "toggle-group", "tooltip"
+    ]
+  },
+  "maintenanceScripts": {
+    "packageLocal": [
+      {
+        "project": "ui",
+        "path": "scripts/reconcile-registry.mjs",
+        "packageScript": "ui:add:all"
+      }
+    ],
+    "contract": {
+      "ownPackageOnly": true,
+      "deterministic": true,
+      "idempotent": true,
+      "mayOrchestrateRepository": false,
+      "mayChangeArchitecture": false,
+      "mayBypassPolicy": false
+    }
+  },
+  "integrations": {
+    "serverDirectory": "integrations",
+    "externalImplementationPackages": ["mongoose", "redis", "stripe"]
+  },
+  "packageManagement": {
+    "manager": "pnpm",
+    "packageManagerVersion": "11.19.0",
+    "workspaceFile": "pnpm-workspace.yaml",
+    "workspacePatterns": ["apps/*", "servers/*", "packages/*", "prebuilt/*", "prebuilt/*/*"],
+    "allowedBuildDependencies": ["esbuild", "unrs-resolver"],
+    "lockfile": "pnpm-lock.yaml",
+    "forbiddenLockfiles": ["package-lock.json", "yarn.lock"],
+    "internalDependencyProtocol": "workspace:"
+  },
+  "security": {
+    "model": "standard-engines-repository-policy",
+    "dependencyAudit": {
+      "engine": "pnpm-audit",
+      "minimumSeverity": "high"
+    },
+    "secretScan": {
+      "engine": "trufflehog",
+      "version": "3.97.5",
+      "execution": "managed-binary",
+      "scanMode": "filesystem",
+      "resultClasses": ["verified", "unknown", "unverified"],
+      "configuration": ".trufflehog-exclude-paths.txt"
+    }
+  },
+  "gitGovernance": {
+    "hooks": "husky",
+    "commitMessages": "commitlint",
+    "commitConvention": "conventional-commits",
+    "stagedFiles": "lint-staged",
+    "defaultBranch": "main",
+    "mergeStrategy": "squash",
+    "requiredStatusCheck": "validate",
+    "signedCommits": "optional",
+    "codeOwners": ["@adeelchainz"],
+    "branchPattern": "^(feature|fix|refactor|perf|test|docs|build|ci|chore|hotfix|release)/[a-z0-9]+(?:-[a-z0-9]+)*$",
+    "tools": {
+      "husky": "9.1.7",
+      "@commitlint/cli": "20.5.3",
+      "@commitlint/config-conventional": "20.5.3",
+      "lint-staged": "16.4.0"
+    }
+  },
+  "moduleBoundaries": [
+    { "project": "web", "root": "features/workspace-foundation", "categories": ["components"], "rootExports": ["components"] },
+    { "project": "web", "root": "features/rule-builder", "categories": ["components"], "rootExports": ["components"] },
+    { "project": "web", "root": "types", "categories": ["configuration", "routing"], "rootExports": ["configuration", "routing"] },
+    { "project": "api", "root": "integrations", "categories": ["mongodb"], "rootExports": ["mongodb"] },
+    { "project": "api", "root": "constants", "categories": ["errors", "http", "runtime"], "rootExports": ["errors", "http", "runtime"] },
+    { "project": "api", "root": "types", "categories": ["configuration"], "rootExports": ["configuration"] },
+    { "project": "api", "root": "features/health", "categories": ["controllers", "routes", "services"], "rootExports": ["routes"] },
+    { "project": "types", "root": "src", "categories": ["api"], "rootExports": ["api"] },
+    { "project": "types", "root": "src/api", "categories": ["environment", "errors", "health"], "rootExports": ["environment", "errors", "health"] },
+    { "project": "ui", "root": "src", "categories": ["components", "compositions", "hooks", "primitives", "utilities"], "rootExports": ["components", "compositions", "hooks", "primitives"] }
+  ],
+  "contractOwnership": {
+    "sharedTypesRoot": "packages/types",
+    "sharedValidationRoot": "packages/validation",
+    "extractionRule": "genuine-cross-boundary-reuse"
+  },
+  "testingModel": {
+    "principle": "behavior-and-boundaries-not-files",
+    "levels": ["unit", "component", "integration", "e2e"]
+  },
+  "programmingModel": {
+    "prefer": ["pure-functions", "immutable-data", "composition", "explicit-dependencies"],
+    "avoid": ["inheritance", "dependency-injection-containers", "mutable-global-state"]
+  }
+}

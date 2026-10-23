@@ -1,0 +1,109 @@
+@import "@workspace/ui/styles.css";
+
+@source "../**/*.{ts,tsx}";
+@source "../../../packages/ui/src/**/*.{ts,tsx}";
+
+/* The app uses the shared semantic palette in both color schemes. */
+:root {
+  color-scheme: light;
+  --background: #f6f7fb;
+  --foreground: #171a2b;
+  --card: #ffffff;
+  --card-foreground: #171a2b;
+  --popover: #ffffff;
+  --popover-foreground: #171a2b;
+  --primary: #5148d8;
+  --primary-foreground: #ffffff;
+  --secondary: #eeedff;
+  --secondary-foreground: #3932a5;
+  --destructive: #bd344c;
+  --destructive-foreground: #ffffff;
+  --accent: #efeffb;
+  --accent-foreground: #292b43;
+  --muted: #f0f1f7;
+  --muted-foreground: #62677d;
+  --border: #e3e5ef;
+  --input: #d9dcea;
+  --ring: #7770eb;
+  --radius: 0.8rem;
+  --sidebar: #181a2c;
+  --sidebar-foreground: #c6c9dc;
+  --sidebar-primary: #827cf2;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #292c43;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #2b2e46;
+  --sidebar-ring: #a7a2ff;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: #11131c;
+  --foreground: #eceef8;
+  --card: #191c27;
+  --card-foreground: #eceef8;
+  --popover: #1d202d;
+  --popover-foreground: #eceef8;
+  --primary: #a39dff;
+  --primary-foreground: #17152e;
+  --secondary: #29283f;
+  --secondary-foreground: #dedcff;
+  --destructive: #f07887;
+  --destructive-foreground: #250b10;
+  --accent: #252838;
+  --accent-foreground: #f2f2fc;
+  --muted: #202330;
+  --muted-foreground: #a5a9bc;
+  --border: #2b2f40;
+  --input: #34394c;
+  --ring: #a39dff;
+  --sidebar: #0d0f17;
+  --sidebar-foreground: #c6c9dc;
+  --sidebar-primary: #a39dff;
+  --sidebar-primary-foreground: #17152e;
+  --sidebar-accent: #202331;
+  --sidebar-accent-foreground: #f1f2fa;
+  --sidebar-border: #292d3c;
+  --sidebar-ring: #a39dff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light):not(.dark) {
+    color-scheme: dark;
+    --background: #11131c;
+    --foreground: #eceef8;
+    --card: #191c27;
+    --card-foreground: #eceef8;
+    --popover: #1d202d;
+    --popover-foreground: #eceef8;
+    --primary: #a39dff;
+    --primary-foreground: #17152e;
+    --secondary: #29283f;
+    --secondary-foreground: #dedcff;
+    --destructive: #f07887;
+    --destructive-foreground: #250b10;
+    --accent: #252838;
+    --accent-foreground: #f2f2fc;
+    --muted: #202330;
+    --muted-foreground: #a5a9bc;
+    --border: #2b2f40;
+    --input: #34394c;
+    --ring: #a39dff;
+    --sidebar: #0d0f17;
+    --sidebar-foreground: #c6c9dc;
+    --sidebar-primary: #a39dff;
+    --sidebar-primary-foreground: #17152e;
+    --sidebar-accent: #202331;
+    --sidebar-accent-foreground: #f1f2fa;
+    --sidebar-border: #292d3c;
+    --sidebar-ring: #a39dff;
+  }
+}
+
+html { scroll-behavior: smooth; }
+body { background: var(--background); color: var(--foreground); }
+::selection { background: color-mix(in srgb, var(--primary) 24%, transparent); }
+button, a, input, select, textarea { outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

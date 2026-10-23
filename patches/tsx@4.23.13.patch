@@ -1,0 +1,14 @@
+diff --git a/dist/temporary-directory-B83uKxJF.cjs b/dist/temporary-directory-B83uKxJF.cjs
+index 2d8def99bfa2306b2306bf5e26137f17a359fe7e..32397d69915cf7a45727846b510e6102e716d470 100644
+--- a/dist/temporary-directory-B83uKxJF.cjs
++++ b/dist/temporary-directory-B83uKxJF.cjs
+@@ -1 +1 @@
+-"use strict";var s=require("node:path"),r=require("node:os");const{geteuid:e}=process,t=e?e():r.userInfo().username,i=s.join(r.tmpdir(),`tsx-${t}`);exports.tmpdir=i;
++"use strict";var s=require("node:path"),r=require("node:os");const{geteuid:e}=process,t=e?e():(process.platform==="win32"?process.env.USERNAME??r.userInfo().username:r.userInfo().username),i=s.join(r.tmpdir(),`tsx-${t}`);exports.tmpdir=i;
+diff --git a/dist/temporary-directory-BDDVQOvU.mjs b/dist/temporary-directory-BDDVQOvU.mjs
+index d62743ab6d298f69658b7a5701c74d530d53d4dc..5de19eebe8c21e09a00972ab1e4c54281ebc8682 100644
+--- a/dist/temporary-directory-BDDVQOvU.mjs
++++ b/dist/temporary-directory-BDDVQOvU.mjs
+@@ -1 +1 @@
+-import s from"node:path";import o from"node:os";const{geteuid:r}=process,t=r?r():o.userInfo().username,e=s.join(o.tmpdir(),`tsx-${t}`);export{e as t};
++import s from"node:path";import o from"node:os";const{geteuid:r}=process,t=r?r():(process.platform==="win32"?process.env.USERNAME??o.userInfo().username:o.userInfo().username),e=s.join(o.tmpdir(),`tsx-${t}`);export{e as t};

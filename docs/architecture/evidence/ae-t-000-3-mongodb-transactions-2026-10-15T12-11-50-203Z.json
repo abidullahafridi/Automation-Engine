@@ -1,0 +1,42 @@
+{
+  "task": "AE-T-000.3",
+  "executedAt": "2026-10-15T12:11:51.136Z",
+  "operatorConfirmation": "ALLOW_NON_PROD=yes",
+  "checks": [
+    {
+      "name": "topology",
+      "status": "PASS",
+      "executed": true,
+      "topology": "replicaSet",
+      "sessionsSupported": true,
+      "serverVersion": "8.3.9"
+    },
+    {
+      "name": "atomicCommit",
+      "status": "PASS",
+      "executed": true,
+      "committedDocuments": 2
+    },
+    {
+      "name": "abortRollback",
+      "status": "PASS",
+      "executed": true,
+      "persistedDocumentsAfterAbort": 0
+    },
+    {
+      "name": "duplicateKeyAbort",
+      "status": "PASS",
+      "executed": true,
+      "duplicateKeyObserved": true,
+      "stagedDocumentPersisted": false
+    },
+    {
+      "name": "concurrentNoLostUpdate",
+      "status": "PASS",
+      "executed": true,
+      "expectedValue": 2,
+      "actualValue": 2
+    }
+  ],
+  "overall": "PASS"
+}

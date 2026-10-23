@@ -1,0 +1,13 @@
+{
+  "name": "types",
+  "type": "package",
+  "description": "Shared cross-workspace TypeScript contracts.",
+  "internalDependencies": ["eslint-config", "tsconfig"],
+  "externalDependencies": [],
+  "capabilities": ["shared-types", "api-contracts"],
+  "tasks": {
+    "build": { "command": "pnpm run build", "outputs": ["dist"], "cache": true },
+    "lint": { "command": "pnpm run lint", "cache": false },
+    "typecheck": { "command": "pnpm run typecheck", "cache": false }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "task": "AE-T-000.3",
+  "executedAt": "2026-10-14T16:39:28.247Z",
+  "operatorConfirmation": "ALLOW_NON_PROD=yes",
+  "checks": [
+    {
+      "name": "topology",
+      "status": "FAIL",
+      "executed": true,
+      "detail": "Target does not advertise a transaction-capable replica set or sharded cluster."
+    },
+    {
+      "name": "atomicCommit",
+      "status": "FAIL",
+      "executed": true,
+      "detail": "MongoDB operation failed.",
+      "errorName": "MongoBulkWriteError"
+    },
+    {
+      "name": "abortRollback",
+      "status": "FAIL",
+      "executed": true,
+      "detail": "MongoDB operation failed.",
+      "errorName": "MongoBulkWriteError"
+    },
+    {
+      "name": "duplicateKeyAbort",
+      "status": "FAIL",
+      "executed": true,
+      "detail": "MongoDB operation failed.",
+      "errorName": "MongoServerError"
+    },
+    {
+      "name": "concurrentNoLostUpdate",
+      "status": "FAIL",
+      "executed": true,
+      "detail": "MongoDB operation failed.",
+      "errorName": "MongoServerError",
+      "errorCode": 20
+    }
+  ],
+  "overall": "FAIL"
+}

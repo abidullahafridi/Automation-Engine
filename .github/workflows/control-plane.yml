@@ -1,0 +1,169 @@
+name: Control Plane
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  architecture:
+    name: architecture
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run node:check
+      - run: pnpm run check
+
+  quality:
+    name: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run lint
+      - run: pnpm run typecheck
+
+  automation-suite:
+    name: automation-suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Run automation unit, integration, contract, and tenant-isolation suites
+        run: pnpm test
+
+  security:
+    name: security
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run scan
+
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+
+  validate:
+    name: validate
+    if: ${{ always() }}
+    needs: [architecture, quality, automation-suite, security, build, commit-message]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail closed unless every required quality gate succeeded
+        env:
+          ARCHITECTURE_RESULT: ${{ needs.architecture.result }}
+          QUALITY_RESULT: ${{ needs.quality.result }}
+          AUTOMATION_SUITE_RESULT: ${{ needs.automation-suite.result }}
+          SECURITY_RESULT: ${{ needs.security.result }}
+          BUILD_RESULT: ${{ needs.build.result }}
+          COMMIT_MESSAGE_RESULT: ${{ needs.commit-message.result }}
+        run: >-
+          test "$ARCHITECTURE_RESULT" = success &&
+          test "$QUALITY_RESULT" = success &&
+          test "$AUTOMATION_SUITE_RESULT" = success &&
+          test "$SECURITY_RESULT" = success &&
+          test "$BUILD_RESULT" = success &&
+          test "$COMMIT_MESSAGE_RESULT" = success
+
+  commit-message:
+    name: commit-message
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Validate pull request commits
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: pnpm run commitlint --from "$BASE_SHA" --to "$HEAD_SHA" --verbose
+      - name: Validate main commit
+        if: github.event_name == 'push'
+        run: pnpm run commitlint --last --verbose
+
+  mongo-replica-set-probe:
+    name: PROPOSED - needs infra owner approval (MongoDB rs0 probe)
+    if: ${{ vars.MONGO_REPLICA_SET_CI_APPROVED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Start approved local rs0 fixture
+        run: docker compose up -d --wait mongodb
+      - name: Verify local replica-set transaction mechanism (not target verification)
+        env:
+          MONGO_URI: mongodb://127.0.0.1:27017/automation_test?replicaSet=rs0
+          ALLOW_NON_PROD: "yes"
+        run: node scripts/verify-mongo-transactions.mjs
+      - name: Stop local rs0 fixture
+        if: always()
+        run: docker compose down

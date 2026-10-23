@@ -1,0 +1,40 @@
+{
+  "name": "monorepo-foundation",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.19.0",
+  "scripts": {
+    "repo": "node codebase/cli/repo.mjs",
+    "graph": "node codebase/cli/repo.mjs graph",
+    "projects": "node codebase/cli/repo.mjs projects",
+    "tasks": "node codebase/cli/repo.mjs tasks",
+    "affected": "node codebase/cli/repo.mjs affected",
+    "dev": "node codebase/cli/repo.mjs run dev --concurrency 2",
+    "build": "node codebase/cli/repo.mjs build --concurrency 2",
+    "repo:test": "node codebase/cli/repo.mjs test",
+    "test:control-plane": "node --test codebase/**/*.test.mjs",
+    "test:units": "node codebase/cli/repo.mjs test --concurrency 2",
+    "lint": "node codebase/cli/repo.mjs run lint --concurrency 2",
+    "typecheck": "node codebase/cli/repo.mjs run typecheck --concurrency 2",
+    "check": "node codebase/cli/repo.mjs check",
+    "scan": "node codebase/cli/repo.mjs scan",
+    "validate": "pnpm run node:check && node codebase/cli/repo.mjs validate && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build",
+    "node:check": "node codebase/checks/node-syntax.mjs",
+    "commitlint": "commitlint",
+    "lint:staged": "lint-staged",
+    "prepare": "husky",
+    "ui:add": "pnpm --dir packages/ui run ui:add",
+    "ui:add:all": "pnpm --dir packages/ui run ui:add:all",
+    "test": "pnpm run test:control-plane && pnpm run test:units"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "20.5.3",
+    "@commitlint/config-conventional": "20.5.3",
+    "@workspace/tsconfig": "workspace:*",
+    "husky": "9.1.7",
+    "lint-staged": "16.4.0"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  }
+}

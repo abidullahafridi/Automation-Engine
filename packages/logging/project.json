@@ -1,0 +1,14 @@
+{
+  "name": "logging",
+  "type": "package",
+  "description": "Reusable structured application and HTTP logging capability.",
+  "internalDependencies": ["eslint-config", "tsconfig"],
+  "externalDependencies": ["morgan", "pino", "pino-pretty"],
+  "capabilities": ["application-logging", "http-logging"],
+  "tasks": {
+    "build": { "command": "pnpm run build", "outputs": ["dist"], "cache": true },
+    "test": { "command": "pnpm test", "cache": false },
+    "lint": { "command": "pnpm run lint", "cache": false },
+    "typecheck": { "command": "pnpm run typecheck", "cache": false }
+  }
+}

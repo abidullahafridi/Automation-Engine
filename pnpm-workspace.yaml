@@ -1,0 +1,27 @@
+packages:
+  - "apps/*"
+  - "servers/*"
+  - "packages/*"
+  - "prebuilt/*"
+  - "prebuilt/*/*"
+
+allowBuilds:
+  esbuild: true
+  unrs-resolver: true
+
+overrides:
+  '@modelcontextprotocol/sdk': 1.31.0
+  sharp: 0.35.5
+  source-map-js: 1.2.2
+
+audit:
+  level: high
+  ignore:
+    # SEC-010 (AE-T-072.1): GHSA-vfj7-8cjw-p6xm — braces stack-exhaustion DoS.
+    # No fixed release exists upstream (3.0.3 is latest; 3.0.4 unpublished). Dev-only
+    # toolchain (eslint-config-next, shadcn/ts-morph); not in any runtime bundle.
+    # Accepted risk with review date in security.findings.ts; remove when braces 3.0.4 ships.
+    - GHSA-vfj7-8cjw-p6xm
+
+patchedDependencies:
+  tsx@4.23.13: patches/tsx@4.23.13.patch

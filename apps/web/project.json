@@ -1,0 +1,15 @@
+{
+  "name": "web",
+  "type": "app",
+  "description": "Primary Next.js web application.",
+  "internalDependencies": ["eslint-config", "tsconfig", "ui"],
+  "externalDependencies": ["lucide-react", "next", "react", "react-dom", "tailwindcss", "zod"],
+  "capabilities": ["web", "app-router", "shadcn-ui", "tailwind"],
+  "tasks": {
+    "dev": { "command": "pnpm run dev", "environment": ["PORT", "NEXT_DIST_DIR", "NEXT_PUBLIC_API_BASE_URL"], "cache": false },
+    "build": { "command": "pnpm run build", "outputs": [".next"], "environment": ["NEXT_PUBLIC_API_BASE_URL"], "cache": true },
+    "test": { "command": "pnpm test", "cache": false },
+    "lint": { "command": "pnpm run lint", "cache": false },
+    "typecheck": { "command": "pnpm run typecheck", "cache": false }
+  }
+}

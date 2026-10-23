@@ -1,0 +1,9 @@
+{
+  "name": "eslint-config",
+  "type": "config",
+  "description": "Shared ESLint presets for repository TypeScript workspaces.",
+  "internalDependencies": [],
+  "externalDependencies": ["@eslint/js", "eslint", "eslint-config-next", "globals", "typescript-eslint"],
+  "capabilities": ["eslint-configuration"],
+  "tasks": {}
+}

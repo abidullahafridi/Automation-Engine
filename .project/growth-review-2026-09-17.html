@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nutshyll Growth Map</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#ffffff;--ink:#161a20;--ink-2:#4b5563;--ink-3:#7a8390;--line:#dde1e7;--line-2:#eceff3;
+  --accent:#0f6e63;--accent-ink:#0b5249;--accent-soft:#e3f1ee;
+  --now:#b3261e;--now-soft:#fbe9e7;--next:#9a5b00;--next-soft:#fbf1dc;--trig:#2f5d9a;--trig-soft:#e6eef9;
+  --have:#1f7a4d;--have-soft:#e3f3ea;--miss:#7a8390;--code-bg:#f0f2f5;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1216;--surface:#161a20;--ink:#e6e9ee;--ink-2:#b4bcc7;--ink-3:#7f8894;--line:#2a313b;--line-2:#1f252d;
+  --accent:#4fb3a6;--accent-ink:#8fd6cc;--accent-soft:#12302c;
+  --now:#ff8a80;--now-soft:#3a1b19;--next:#ffcf70;--next-soft:#352a12;--trig:#8db8f0;--trig-soft:#16263b;
+  --have:#6fd39b;--have-soft:#14302a;--miss:#7f8894;--code-bg:#1d232b;
+}}
+:root[data-theme="dark"]{
+  --bg:#0f1216;--surface:#161a20;--ink:#e6e9ee;--ink-2:#b4bcc7;--ink-3:#7f8894;--line:#2a313b;--line-2:#1f252d;
+  --accent:#4fb3a6;--accent-ink:#8fd6cc;--accent-soft:#12302c;
+  --now:#ff8a80;--now-soft:#3a1b19;--next:#ffcf70;--next-soft:#352a12;--trig:#8db8f0;--trig-soft:#16263b;
+  --have:#6fd39b;--have-soft:#14302a;--miss:#7f8894;--code-bg:#1d232b;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Source Sans 3","Segoe UI",system-ui,sans-serif;font-size:17px;line-height:1.55;padding-inline:20px;padding-block:0 80px}
+a{color:var(--accent-ink);text-underline-offset:2px}
+code,pre{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace}
+code{font-size:.85em;background:var(--code-bg);padding:.08em .35em;border-radius:3px}
+pre{background:var(--code-bg);border:1px solid var(--line-2);padding:14px 16px;border-radius:4px;overflow-x:auto;font-size:.8em;line-height:1.55;margin:12px 0}
+pre code{background:none;padding:0;font-size:inherit}
+h1,h2,h3,h4{font-family:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(2rem,4.5vw,3rem);font-weight:700}
+h2{font-size:1.6rem;margin-top:64px;padding-top:18px;border-top:2px solid var(--ink)}
+h3{font-size:1.15rem;margin-top:30px}
+p{margin:10px 0;max-width:72ch}
+ul,ol{max-width:74ch;padding-left:1.3em;margin:8px 0}
+li{margin:4px 0}
+.eyebrow{font-family:"JetBrains Mono",monospace;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.wrap{max-width:1120px;margin:0 auto}
+header{padding-block:56px 26px;border-bottom:1px solid var(--line)}
+.lede{font-size:1.12rem;color:var(--ink-2);max-width:78ch;margin-top:14px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 28px;margin-top:18px;font-size:.92rem;color:var(--ink-2)}
+.meta b{color:var(--ink);font-weight:600}
+.layout{display:grid;grid-template-columns:210px minmax(0,1fr);gap:48px;align-items:start;margin-top:28px}
+nav.toc{position:sticky;top:20px;font-size:.88rem;border-right:1px solid var(--line);padding-right:16px}
+nav.toc ol{list-style:none;padding:0;margin:0}
+nav.toc li{margin:6px 0}
+nav.toc a{color:var(--ink-2);text-decoration:none}
+nav.toc a:hover{color:var(--accent-ink);text-decoration:underline}
+@media (max-width:860px){.layout{grid-template-columns:1fr}nav.toc{position:static;border-right:0;padding-right:0;border-bottom:1px solid var(--line);padding-bottom:12px}}
+.thesis{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--accent);padding:18px 22px;margin:22px 0}
+.thesis p{max-width:80ch}
+.legend{display:flex;flex-wrap:wrap;gap:10px 22px;font-size:.9rem;color:var(--ink-2);margin:14px 0}
+.legend span{display:flex;align-items:center;gap:8px}
+.chip{display:inline-block;font-family:"JetBrains Mono",monospace;font-size:.68rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:2px;white-space:nowrap}
+.chip.now{background:var(--now-soft);color:var(--now)}
+.chip.next{background:var(--next-soft);color:var(--next)}
+.chip.trig{background:var(--trig-soft);color:var(--trig)}
+.chip.have{background:var(--have-soft);color:var(--have)}
+.chip.miss{background:var(--line-2);color:var(--miss)}
+.tablewrap{overflow-x:auto;max-width:100%}
+table{border-collapse:collapse;width:100%;font-size:.92rem;margin:14px 0}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line-2);vertical-align:top}
+th{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:600;border-bottom:1px solid var(--line)}
+td:first-child{font-weight:600;white-space:nowrap}
+.rec{display:grid;grid-template-columns:118px minmax(0,1fr);gap:16px;padding:18px 0;border-bottom:1px solid var(--line-2)}
+.rec:last-child{border-bottom:0}
+.rec .tag{padding-top:2px;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.rec .rid{font-family:"JetBrains Mono",monospace;font-size:.72rem;color:var(--ink-3)}
+.rec h4{font-size:1.05rem;margin:0 0 4px}
+.rec .where{font-family:"JetBrains Mono",monospace;font-size:.76rem;color:var(--ink-2);margin:0 0 6px;word-break:break-word}
+.rec p{margin:6px 0;max-width:82ch}
+.rec .trigger{font-size:.9rem;color:var(--ink-2);margin-top:8px}
+.rec .trigger b{color:var(--trig)}
+@media (max-width:600px){.rec{grid-template-columns:1fr;gap:6px}.rec .tag{flex-direction:row;flex-wrap:wrap}}
+.tree{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px}
+.tree figure{margin:0}
+.tree figcaption{font-size:.8rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.add{color:var(--have);font-weight:600}
+.opt{color:var(--trig)}
+.dim{color:var(--ink-3)}
+.slice{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin:16px 0}
+.slice section{background:var(--surface);border:1px solid var(--line);padding:14px 16px}
+.slice h4{font-size:.98rem;margin:0 0 6px}
+.slice ul{font-size:.92rem;padding-left:1.1em;margin:0}
+.dont{background:var(--surface);border:1px solid var(--line);padding:6px 20px;margin:16px 0}
+.dont li{margin:8px 0}
+.note{font-size:.92rem;color:var(--ink-2);border-left:3px solid var(--line);padding-left:14px;margin:12px 0}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="eyebrow">Structure, architecture &amp; capability review</div>
+  <h1 style="margin-top:10px">Nutshyll Growth Map</h1>
+  <p class="lede">Where the monorepo foundation has gaps, what it is missing for its first real product feature, and what to add next. Every recommendation names where it belongs under the repository's own ownership rules and the concrete trigger that justifies adding it, so the map stays true to "everything available, nothing unnecessarily imposed".</p>
+  <div class="meta">
+    <span><b>Date</b> 2026-09-17</span>
+    <span><b>Baseline</b> commit 0f7db11 plus the in-progress UI registry reconciliation</span>
+    <span><b>Companion</b> <a href="https://claude.ai/artifact/UuHfEztyWB3KJuWdmAZiKC">defect audit of the same day</a></span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="Contents">
+  <div class="eyebrow" style="margin-bottom:10px">Contents</div>
+  <ol>
+    <li><a href="#thesis">Summary</a></li>
+    <li><a href="#matrix">Capability matrix</a></li>
+    <li><a href="#structure">Structure</a></li>
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#features">Product capabilities</a></li>
+    <li><a href="#platform">Platform &amp; operations</a></li>
+    <li><a href="#dx">Developer experience</a></li>
+    <li><a href="#agent">Agent plane</a></li>
+    <li><a href="#slice">First vertical slice</a></li>
+    <li><a href="#dont">Deliberately not recommended</a></li>
+  </ol>
+</nav>
+
+<main>
+<section id="thesis">
+<h2 style="margin-top:0;border-top:0;padding-top:0">Summary</h2>
+<div class="thesis">
+<p><b>The foundation is complete as a skeleton and empty as a product.</b> It has a control plane, two runtimes, three packages, and a thorough policy file, but not one feature directory, not one business route, and no example of the feature-first model it prescribes. The rules for <code>&lt;feature&gt;.route.ts</code>, <code>&lt;feature&gt;.service.ts</code>, and <code>domain/</code> are written down and enforced, yet nothing in the tree demonstrates them.</p>
+<p>The largest gap is therefore not a missing tool. It is the missing <b>reference feature</b> that proves the conventions end to end: a shared schema, a server feature, a typed client, a web feature, persistence, auth, and tests at each level. The planned M03.3 auth slice is the right vehicle. Most recommendations below either prepare for that slice or are triggered by it.</p>
+</div>
+<div class="legend">
+  <span><span class="chip now">Now</span> needed before or during the first feature</span>
+  <span><span class="chip next">Next</span> needed before the first real deployment</span>
+  <span><span class="chip trig">On trigger</span> add only when the named condition occurs</span>
+</div>
+</section>
+
+<section id="matrix">
+<h2>Capability matrix</h2>
+<p>What an enterprise product monorepo typically carries, against what exists here.</p>
+<div class="tablewrap">
+<table>
+<thead><tr><th>Area</th><th>State</th><th>What exists</th><th>Main gap</th><th>Priority</th></tr></thead>
+<tbody>
+<tr><td>Feature model</td><td><span class="chip miss">Policy only</span></td><td>Role names, domain rules, boundary checks</td><td>No feature root on the server, no feature registration contract, no reference feature</td><td><span class="chip now">Now</span></td></tr>
+<tr><td>API contract</td><td><span class="chip miss">Partial</span></td><td><code>packages/types</code> with health and error types</td><td>No schema-first contract, no OpenAPI, no versioning, no pagination or error standard</td><td><span class="chip now">Now</span></td></tr>
+<tr><td>Web data access</td><td><span class="chip miss">Missing</span></td><td>A hyperlink to <code>/health</code></td><td>No typed client, no server-only fetch layer, no client cache strategy</td><td><span class="chip now">Now</span></td></tr>
+<tr><td>Shared validation</td><td><span class="chip miss">Referenced</span></td><td>Named in policy, absent on disk</td><td>Created only once a schema is shared; the auth slice will share one</td><td><span class="chip now">Now</span></td></tr>
+<tr><td>Authentication</td><td><span class="chip miss">Planned</span></td><td>M03.3 milestone named</td><td>No decision record on session model, library, or web-to-API trust</td><td><span class="chip now">Now</span></td></tr>
+<tr><td>Authorization</td><td><span class="chip miss">Missing</span></td><td>Policy file role <code>&lt;feature&gt;.policy.ts</code></td><td>No permission model or enforcement point</td><td><span class="chip next">Next</span></td></tr>
+<tr><td>Persistence</td><td><span class="chip miss">Adapter only</span></td><td>Mongoose connection factory, unused</td><td>No repository example, migrations, index management, seeding, or test database</td><td><span class="chip now">Now</span></td></tr>
+<tr><td>UI system</td><td><span class="chip have">Strong</span></td><td>shadcn registry in <code>packages/ui</code>, compositions, tokens</td><td>No package-owned stylesheet, no component workbench, no app shell or dark theme</td><td><span class="chip next">Next</span></td></tr>
+<tr><td>Forms</td><td><span class="chip miss">Dependencies only</span></td><td>react-hook-form and resolvers installed in ui</td><td>No form composition wired to shared schemas</td><td><span class="chip now">Now</span></td></tr>
+<tr><td>Control plane</td><td><span class="chip have">Strong</span></td><td>Discovery, graph, runner, cache, checks, scans, profiles</td><td>No feature generator, no doctor command, no project filter, no watch</td><td><span class="chip next">Next</span></td></tr>
+<tr><td>Testing</td><td><span class="chip miss">Unit only</span></td><td>node:test per unit, 50 control-plane tests</td><td>No DOM component tests, no database integration tests, no end-to-end suite</td><td><span class="chip now">Now</span></td></tr>
+<tr><td>Observability</td><td><span class="chip miss">Logging only</span></td><td>pino facade, enabler README</td><td>No request correlation, error tracking, metrics, or tracing</td><td><span class="chip next">Next</span></td></tr>
+<tr><td>Delivery</td><td><span class="chip miss">Missing</span></td><td>One CI workflow</td><td>No containers, environments, preview deploys, release process, or branch model record</td><td><span class="chip next">Next</span></td></tr>
+<tr><td>Security</td><td><span class="chip miss">Partial</span></td><td>pnpm audit, TruffleHog, build-script allowlist</td><td>No headers, rate limits, CSRF model, SAST, dependency automation, or secrets manager</td><td><span class="chip next">Next</span></td></tr>
+<tr><td>Human docs</td><td><span class="chip miss">Missing</span></td><td>Agent-facing markdown</td><td>No README, onboarding, decision records, or runbooks</td><td><span class="chip now">Now</span></td></tr>
+<tr><td>Background work</td><td><span class="chip miss">Not needed yet</span></td><td>Nothing</td><td>Worker runtime and queue when a job exists</td><td><span class="chip trig">On trigger</span></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section id="structure">
+<h2>Structure</h2>
+<p>The physical layout is clean and the plane separation is real. The gaps are places where a convention is prescribed but has no physical home yet, and places where one-off tooling is appearing outside the control plane.</p>
+
+<div class="tree">
+<figure>
+<figcaption>Today</figcaption>
+<pre><code>apps/web/
+  app/  components/workspace/  config/
+  constants/  types/  validation/  tests/
+servers/api/
+  bootstrap/  config/  constants/{errors,http,runtime}/
+  errors/  integrations/mongodb/  middleware/
+  types/  validation/  tests/
+packages/
+  logging/  types/  ui/ <span class="dim">(+ scripts/ new)</span>
+enablers/observability/README.md
+prebuilt/.gitkeep</code></pre>
+</figure>
+<figure>
+<figcaption>Recommended shape after the first slice</figcaption>
+<pre><code>apps/web/
+  app/<span class="add">(public)/ (app)/</span>
+  <span class="add">features/auth/</span>   <span class="add">lib/api/</span>   <span class="add">e2e/</span>
+servers/api/
+  <span class="add">features/auth/</span>  auth.route.ts  auth.service.ts
+                  auth.repository.ts  auth.model.ts
+  <span class="add">features/health/</span>  health.route.ts
+packages/
+  <span class="add">validation/auth/</span>   <span class="add">tsconfig/</span>   <span class="add">eslint-config/</span>
+<span class="opt">servers/worker/</span>        <span class="dim">on first background job</span>
+<span class="add">enablers/containers/</span>   <span class="opt">enablers/deploy/</span>
+<span class="add">.project/decisions/</span>    <span class="add">README.md</span></code></pre>
+</figure>
+</div>
+
+<div class="rec">
+  <div class="tag"><span class="chip now">Now</span><span class="rid">STR-1</span></div>
+  <div>
+    <h4>Give server features a physical root and a registration contract</h4>
+    <p class="where">architecture.yaml featureModel · servers/api/bootstrap/create-app.ts</p>
+    <p>The policy names <code>featureRoot: "features"</code> for UI but never says where server features live, and <code>create-app.ts</code> registers <code>/health</code> inline. Declare <code>servers/&lt;runtime&gt;/features/&lt;feature&gt;/</code> in policy, and have each feature export a router factory that receives explicit dependencies. The composition root then becomes a list, and health becomes the first feature that follows the rule.</p>
+<pre><code>// servers/api/features/health/health.route.ts
+export const createHealthRoutes = ({ config, database }: HealthDependencies) =&gt; router;
+
+// bootstrap/create-app.ts
+const features = [createHealthRoutes(deps), createAuthRoutes(deps)];
+features.forEach((routes) =&gt; app.use("/v1", routes));</code></pre>
+  </div>
+</div>
+
+<div class="rec">
+  <div class="tag"><span class="chip now">Now</span><span class="rid">STR-2</span></div>
+  <div>
+    <h4>Extract shared tooling configuration into config packages</h4>
+    <p class="where">packages/tsconfig · packages/eslint-config</p>
+    <p>Five ESLint configs and four tsconfigs repeat the same strict flags. Config-only packages are the one place where extraction is justified before feature reuse, because the reuse is already real. The control plane's tsconfig policy check can then verify <code>extends</code> instead of re-reading twelve flags per unit. Decide whether these need a new project type such as <code>config</code>, since they have no build, lint, or test task.</p>
+  </div>
+</div>
+
+<div class="rec">
+  <div class="tag"><span class="chip now">Now</span><span class="rid">STR-3</span></div>
+  <div>
+    <h4>Bring package-local scripts under the control plane or document them</h4>
+    <p class="where">packages/ui/scripts/reconcile-registry.mjs</p>
+    <p>A registry reconciliation script has appeared inside the UI package. Repository-wide policy reconciliation is control-plane work by the repo's own definition. Either move it to <code>codebase/</code> as a <code>repo ui reconcile</code> command with tests, or record in the UI instructions that package-local maintenance scripts are allowed and what they may touch.</p>
+  </div>
+</div>
+
+<div class="rec">
+  <div class="tag"><span class="chip next">Next</span><span class="rid">STR-4</span></div>
+  <div>
+    <h4>Define what <code>prebuilt/</code> and <code>enablers/</code> actually contain</h4>
+    <p class="where">prebuilt/.gitkeep · enablers/observability/README.md · pnpm-workspace.yaml</p>
+    <p><code>prebuilt/</code> is a workspace glob and a project type with no example and no manifest shape. <code>enablers/</code> holds one README. Write a one-page contract for each: what a unit looks like, whether it has a <code>project.json</code>, which tasks it exposes, and one worked example. Container definitions and local compose are the natural first enabler content.</p>
+  </div>
+</div>
+
+<div class="rec">
+  <div class="tag"><span class="chip next">Next</span><span class="rid">STR-5</span></div>
+  <div>
+    <h4>Split the web app into route groups before the second page</h4>
+    <p class="where">apps/web/app</p>
+    <p>There is one route. Authenticated and public surfaces will need different layouts, metadata, and guards. Introduce <code>(public)</code> and <code>(app)</code> route groups with the auth slice, so layout ownership is decided once rather than retrofitted.</p>
+  </div>
+</div>
+
+<div class="rec">
+  <div class="tag"><span class="chip trig">On trigger</span><span class="rid">STR-6</span></div>
+  <div>
+    <h4>Trim category directories that hold one file</h4>
+    <p class="where">servers/api/constants/{errors,http,runtime} · apps/web/types/{configuration,routing}</p>
+    <p>Eight constant files and five type files hold roughly twenty values between them, each behind a barrel. The categorization rule is sound at scale, but it currently adds navigation cost without separating anything.</p>
+    <p class="trigger"><b>Trigger:</b> relax the rule to "categorize when a category passes three files", and apply it at the next policy revision.</p>
+  </div>
+</div>
+</section>
+
+<section id="architecture">
+<h2>Architecture</h2>
+
+<div class="rec">
+  <div class="tag"><span class="chip now">Now</span><span class="rid">ARC-1</span></div>
+  <div>
+    <h4>Adopt a schema-first API contract</h4>
+    <p class="where">packages/validation · packages/types · servers/api features · apps/web/lib/api</p>
+    <p>Today request and response shapes are hand-written TypeScript in <code>packages/types</code>, with no runtime check on either side. Make zod schemas the source: request and response schemas live in <code>packages/validation/&lt;area&gt;</code>, types are inferred, the server validates input with them, and the web client parses responses with them. This is exactly the "infer the type from the shared schema" rule the standards already state.</p>
+    <p>Then choose one delivery style and record it. Plain REST with an OpenAPI document generated from the zod schemas keeps the API consumable by non-TypeScript clients. A typed RPC layer such as ts-rest or oRPC gives end-to-end inference with less code. Either is defensible; leaving it unchosen is not.</p>
+  </div>
+</div>
+
+<div class="rec">
+  <div class="tag"><span class="chip now">Now</span><span class="rid">ARC-2</span></div>
+  <div>
+    <h4>Standardize the API conventions before the first business route</h4>
+    <p class="where">.agent/instructions · packages/types/src/errors</p>
+    <ul>
+      <li><b>Versioning.</b> Mount features under <code>/v1</code>; keep health unversioned.</li>
+      <li><b>Errors.</b> Move the error envelope to RFC 9457 problem details, with a stable <code>code</code> extension the web app can switch on.</li>
+      <li><b>Collections.</b> Fix cursor pagination, sorting, and filtering parameter names once.</li>
+      <li><b>Idempotency.</b> Reserve an <code>Idempotency-Key</code> header for unsafe operations that clients may retry.</li>
+      <li><b>Time and identity.</b> ISO 8601 UTC timestamps and opaque string ids in every contract.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="rec">
+  <div class="tag"><span class="chip now">Now</span><span class="rid">ARC-3</span></div>
+  <div>
+    <h4>Pass a request context object explicitly</h4>
+    <p class="where">servers/api/middleware · feature service signatures</p>
+    <p>Request id, authenticated principal, and a request-scoped child logger will be needed by every feature. The repo forbids hidden global state, which rules out a bare AsyncLocalStorage singleton as the primary mechanism. Build a frozen <code>RequestContext</code> in middleware, attach it to <code>res.locals</code>, and pass it as the first argument to service functions. That keeps services pure with respect to Express and trivially testable.</p>
+  </div>
+</div>
+
+<div class="rec">
+  <div class="tag"><span class="chip now">Now</span><span class="rid">ARC-4</span></div>
+  <div>
+    <h4>Complete the persistence boundary</h4>
+    <p class="where">servers/api/integrations/mongodb · features/*/&lt;feature&gt;.repository.ts</p>
+    <ul>
+      <li><b>Repository contract.</b> Repositories return plain frozen domain values, never Mongoose documents, so services never see the vendor.</li>
+      <li><b>Owned connection.</b> Use a created connection passed as a dependency instead of the global default.</li>
+      <li><b>Schema change.</b> Add a migration runner such as migrate-mongo, with migrations as a server task the control plane can order.</li>
+      <li><b>Indexes.</b> Declare indexes in models, disable auto-indexing in production, and apply them in migrations.</li>
+      <li><b>Test database.</b> Use mongodb-memory-server or Testcontainers for repository integration tests.</li>
+      <li><b>Transactions.</b> Expose a <code>withTransaction</code> helper on the integration for multi-document writes.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="rec">
+  <div class="tag"><span class="chip now">Now</span><span class="rid">ARC-5</span></div>
+  <div>
+    <h4>Decide how the web app talks to the API</h4>
+    <p class="where">apps/web/lib/api · decision record</p>
+    <p>Three patterns are available and the choice shapes auth, caching, and CORS:</p>
+    <ul>
+      <li><b>Server-side calls only.</b> Server Components and Server Actions call the API through a <code>server-only</code> client. The browser never sees the API origin. Simplest security model.</li>
+      <li><b>Backend for frontend.</b> Next route handlers proxy to the API and own the session cookie. Good fit when the API should stay internal.</li>
+      <li><b>Direct browser calls.</b> Needs CORS with credentials, CSRF protection, and a client cache such as TanStack Query.</li>
+    </ul>
+    <p>Recommended default: server-side calls for reads and mutations, with direct browser calls added only where interactivity requires them.</p>
+  </div>
+</div>
+
+<div class="rec">
+  <div class="tag"><span class="chip next">Next</span><span class="rid">ARC-6</span></div>
+  <div>
+    <h4>Add configuration layering and a secrets strategy</h4>
+    <p class="where">servers/api/config · apps/web/config · enablers</p>
+    <p>Both runtimes read flat environment variables with no notion of environment tiers. Record which values differ by environment, which are secrets, and where secrets come from in each tier. Add a control-plane check that every key in each validation schema appears in the matching <code>.env.example</code>.</p>
+  </div>
+</div>
+
+<div class="rec">
+  <div class="tag"><span class="chip next">Next</span><span class="rid">ARC-7</span></div>
+  <div>
+    <h4>Close the loop between policy and tooling</h4>
+    <p class="where">architecture.yaml · codebase/validators</p>
+    <p>Publish a JSON Schema for <code>architecture.yaml</code> so editors and agents get validation and completion. Generate the import-boundary rules into ESLint rather than evaluating them with custom parsing, so violations surface in the editor while typing.</p>
+  </div>
+</div>
+
+<div class="rec">
+  <div class="tag"><span class="chip trig">On trigger</span><span class="rid">ARC-8</span></div>
+  <div>
+    <h4>Domain events and an outbox</h4>
+    <p>When one feature must react to another's state change, publish domain events from services and persist them with the write in an outbox collection. That keeps features decoupled without introducing a broker early.</p>
+    <p class="trigger"><b>Trigger:</b> the first cross-feature side effect, such as "send a welcome email when a user signs up".</p>
+  </div>
+</div>
+
+<div class="rec">
+  <div class="tag"><span class="chip trig">On trigger</span><span class="rid">ARC-9</span></div>
+  <div>
+    <h4>A worker runtime and a queue</h4>
+    <p class="where">servers/worker · servers/api/integrations/redis</p>
+    <p>BullMQ on Redis fits the stack and the functional model. The worker is a new server unit that shares feature services with the API through explicit dependencies, not through HTTP.</p>
+    <p class="trigger"><b>Trigger:</b> the first operation that must not block a request, must retry, or must run on a schedule.</p>
+  </div>
+</div>
+</section>
+
+<section id="features">
+<h2>Product capabilities</h2>
+<p>Capabilities almost every product built on this foundation will need. None should be pre-built. Each should arrive as a feature slice when the product asks for it, using the conventions fixed above.</p>
+
+<div class="rec">
+  <div class="tag"><span class="chip now">Now</span><span class="rid">CAP-1</span></div>
+  <div>
+    <h4>Authentication and sessions</h4>
+    <p>Record the decision before writing code. Recommended default for this stack is an httpOnly, SameSite session cookie issued by the web tier, with server-side session storage, over bearer tokens in the browser. Better Auth is the current well-maintained option that supports Mongo and Next; Auth.js is the alternative. Cover sign-up, sign-in, sign-out, password reset, email verification, and session rotation in the first slice, and leave OAuth providers and MFA as follow-ups.</p>
+  </div>
+</div>
+<div class="rec">
+  <div class="tag"><span class="chip now">Now</span><span class="rid">CAP-2</span></div>
+  <div>
+    <h4>Forms bound to shared schemas</h4>
+    <p class="where">packages/ui compositions · apps/web/features</p>
+    <p>react-hook-form and its resolvers are already installed in the UI package. Add one generic form composition that takes a zod schema, renders field errors from the shadcn form primitive, and maps problem-detail validation errors from the API back onto fields.</p>
+  </div>
+</div>
+<div class="rec">
+  <div class="tag"><span class="chip next">Next</span><span class="rid">CAP-3</span></div>
+  <div>
+    <h4>Authorization</h4>
+    <p>Start with roles on the user and a pure <code>can(principal, action, resource)</code> function per feature in <code>&lt;feature&gt;.policy.ts</code>. Enforce it in services, not only in routes, so the worker path is covered too. Move to attribute-based rules or a policy engine only when roles stop fitting.</p>
+  </div>
+</div>
+<div class="rec">
+  <div class="tag"><span class="chip next">Next</span><span class="rid">CAP-4</span></div>
+  <div>
+    <h4>Application shell and theming</h4>
+    <p>The sidebar, breadcrumb, and navigation primitives are now in the UI package. Compose an authenticated shell in the <code>(app)</code> route group, wire <code>next-themes</code> with a full dark token set, and load fonts through <code>next/font</code>.</p>
+  </div>
+</div>
+<div class="rec">
+  <div class="tag"><span class="chip next">Next</span><span class="rid">CAP-5</span></div>
+  <div>
+    <h4>Rate limiting and audit trail</h4>
+    <p>Rate-limit authentication endpoints from the first slice. Record security-relevant actions such as sign-in, role change, and data export in an append-only audit collection written by services.</p>
+  </div>
+</div>
+
+<h3>Add when the product asks</h3>
+<div class="tablewrap">
+<table>
+<thead><tr><th>Capability</th><th>Trigger</th><th>Suggested shape</th></tr></thead>
+<tbody>
+<tr><td>Transactional email</td><td>Verification or reset emails in the auth slice</td><td>React Email templates, provider behind <code>integrations/email</code></td></tr>
+<tr><td>File uploads</td><td>First user-supplied file</td><td>Pre-signed object storage URLs, metadata in Mongo, virus scan in the worker</td></tr>
+<tr><td>Internationalization</td><td>Second locale on the roadmap</td><td>next-intl with message catalogs per feature</td></tr>
+<tr><td>Feature flags</td><td>First staged rollout</td><td>OpenFeature SDK with a provider behind an integration</td></tr>
+<tr><td>Product analytics</td><td>First product metric to track</td><td>A thin event function in the web app, provider behind it</td></tr>
+<tr><td>Notifications</td><td>First in-app alert</td><td>A notifications feature fed by domain events</td></tr>
+<tr><td>Search</td><td>Filtering no longer suffices</td><td>Atlas Search or a dedicated engine behind an integration</td></tr>
+<tr><td>Outbound webhooks</td><td>First external subscriber</td><td>Signed deliveries with retries in the worker</td></tr>
+<tr><td>Billing</td><td>First paid plan</td><td>Stripe behind an integration, webhooks verified and processed idempotently</td></tr>
+<tr><td>Multi-tenancy</td><td>First organization concept</td><td>Tenant id in the request context and every repository query</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section id="platform">
+<h2>Platform &amp; operations</h2>
+
+<div class="rec">
+  <div class="tag"><span class="chip now">Now</span><span class="rid">OPS-1</span></div>
+  <div>
+    <h4>Local stack with one command</h4>
+    <p class="where">enablers/containers/compose.yaml · root dev script</p>
+    <p>The API requires MongoDB once the first feature persists anything. Add a compose file with MongoDB, and Redis only when it is needed. Have <code>pnpm run dev</code> start both runtimes with prefixed output after the database is healthy.</p>
+  </div>
+</div>
+<div class="rec">
+  <div class="tag"><span class="chip next">Next</span><span class="rid">OPS-2</span></div>
+  <div>
+    <h4>Container images for both runtimes</h4>
+    <p>Multi-stage Dockerfiles using <code>pnpm deploy</code> to produce a pruned API image, and Next's <code>output: "standalone"</code> for the web image. Run as a non-root user, add a health check, and add them as <code>image</code> tasks so the control plane can order and cache them. That also gives the <code>release</code> profile's undefined <code>artifact</code> task a real meaning.</p>
+  </div>
+</div>
+<div class="rec">
+  <div class="tag"><span class="chip next">Next</span><span class="rid">OPS-3</span></div>
+  <div>
+    <h4>Environments, promotion, and the branch model</h4>
+    <p>The remote has <code>base</code>, <code>develop</code>, <code>stage</code>, and <code>main</code> branches that no document explains. Write down which branch deploys where, how a change is promoted, and who approves production. Prefer trunk-based development with per-pull-request preview environments if the team is small.</p>
+  </div>
+</div>
+<div class="rec">
+  <div class="tag"><span class="chip next">Next</span><span class="rid">OPS-4</span></div>
+  <div>
+    <h4>Observability baseline</h4>
+    <p class="where">packages/telemetry · enablers/observability</p>
+    <ul>
+      <li><b>Errors.</b> Sentry or an equivalent in both runtimes, wired into <code>error.tsx</code>, a new <code>global-error.tsx</code>, and the API error handler.</li>
+      <li><b>Traces and metrics.</b> OpenTelemetry SDK with HTTP, Express, and MongoDB instrumentation, exported over OTLP. The instrumentation code is a package; the collector and dashboards belong to the enabler.</li>
+      <li><b>Correlation.</b> The request id from the request context in every log line and span.</li>
+      <li><b>Service levels.</b> One availability and one latency objective per runtime, with alerts on burn rate.</li>
+    </ul>
+  </div>
+</div>
+<div class="rec">
+  <div class="tag"><span class="chip next">Next</span><span class="rid">OPS-5</span></div>
+  <div>
+    <h4>Security baseline beyond scanning</h4>
+    <ul>
+      <li>Security headers and a Content Security Policy in the web app; helmet in the API.</li>
+      <li>Dependabot or Renovate for npm and GitHub Actions, with a release-age delay.</li>
+      <li>CodeQL or Semgrep on pull requests.</li>
+      <li>An SBOM generated in the release profile.</li>
+      <li>A secrets manager per environment, never plain CI variables for production.</li>
+      <li>A <code>SECURITY.md</code> with a disclosure route.</li>
+    </ul>
+  </div>
+</div>
+<div class="rec">
+  <div class="tag"><span class="chip next">Next</span><span class="rid">OPS-6</span></div>
+  <div>
+    <h4>Operational runbooks and data safety</h4>
+    <p>Document backup and restore for MongoDB and test a restore once. Write runbooks for the three incidents most likely early on: database unreachable, bad deploy, and leaked secret.</p>
+  </div>
+</div>
+<div class="rec">
+  <div class="tag"><span class="chip trig">On trigger</span><span class="rid">OPS-7</span></div>
+  <div>
+    <h4>Infrastructure as code and remote cache</h4>
+    <p>Add Terraform or Pulumi under an enabler when there is more than one environment to keep in sync. Add remote task-cache storage to the control plane when CI time, not correctness, becomes the bottleneck.</p>
+  </div>
+</div>
+</section>
+
+<section id="dx">
+<h2>Developer experience</h2>
+
+<div class="rec">
+  <div class="tag"><span class="chip now">Now</span><span class="rid">DX-1</span></div>
+  <div>
+    <h4>A human README and onboarding path</h4>
+    <p>Purpose, prerequisites, install, run, test, and where to read next, in under a page. Link to AGENTS.md for the rules rather than repeating them.</p>
+  </div>
+</div>
+<div class="rec">
+  <div class="tag"><span class="chip now">Now</span><span class="rid">DX-2</span></div>
+  <div>
+    <h4>A feature generator in the control plane</h4>
+    <p class="where">codebase/generators · repo generate feature</p>
+    <p>The strongest single lever for keeping the feature model consistent. <code>repo generate feature api auth --roles route,service,repository</code> writes only the requested role files, a test, and the router registration line, and the output passes <code>repo check</code> immediately. The existing project generator should be brought to the same standard.</p>
+  </div>
+</div>
+<div class="rec">
+  <div class="tag"><span class="chip now">Now</span><span class="rid">DX-3</span></div>
+  <div>
+    <h4>A doctor command</h4>
+    <p><code>repo doctor</code> checks the Node and pnpm versions, the managed TruffleHog binary, the presence of each <code>.env</code> against its example, database reachability, and line-ending configuration, and prints how to fix each. Today these failures surface only as confusing errors from later commands.</p>
+  </div>
+</div>
+<div class="rec">
+  <div class="tag"><span class="chip next">Next</span><span class="rid">DX-4</span></div>
+  <div>
+    <h4>Runner ergonomics</h4>
+    <p>A <code>--project</code> filter, a watch mode for tests, prefixed streaming output, concurrency defaulting to available CPUs, and a timing summary at the end of every run.</p>
+  </div>
+</div>
+<div class="rec">
+  <div class="tag"><span class="chip next">Next</span><span class="rid">DX-5</span></div>
+  <div>
+    <h4>Test tooling that matches the testing standard</h4>
+    <p>The standard describes component, integration, and end-to-end levels; the tooling supports only static rendering. Add vitest with jsdom and Testing Library for components, a database-backed integration harness for repositories, and Playwright for end-to-end journeys, with glob-based discovery in every unit.</p>
+  </div>
+</div>
+<div class="rec">
+  <div class="tag"><span class="chip next">Next</span><span class="rid">DX-6</span></div>
+  <div>
+    <h4>Component workbench for the UI package</h4>
+    <p>Fifty-four primitives and three compositions with no place to see them. Storybook or Ladle in <code>packages/ui</code>, with an accessibility addon, gives reviewers and agents a visual contract and a home for visual regression later.</p>
+  </div>
+</div>
+<div class="rec">
+  <div class="tag"><span class="chip next">Next</span><span class="rid">DX-7</span></div>
+  <div>
+    <h4>Editor and commit hygiene</h4>
+    <p><code>.editorconfig</code>, <code>.gitattributes</code>, a formatter such as Prettier or Biome, recommended VS Code extensions and settings, commit message linting, and a pre-commit hook running the formatter and TruffleHog on staged files. Consider a dev container so Windows and Linux contributors share one toolchain.</p>
+  </div>
+</div>
+</section>
+
+<section id="agent">
+<h2>Agent plane</h2>
+<p>The agent guidance is concise and consistent. Its gaps are about proof and repeatability rather than rules.</p>
+
+<div class="rec">
+  <div class="tag"><span class="chip now">Now</span><span class="rid">AGT-1</span></div>
+  <div>
+    <h4>A feature playbook with a worked example</h4>
+    <p class="where">.agent/playbooks/add-feature.md</p>
+    <p>The instructions say what is allowed but never walk through adding a feature. Once the auth slice lands, write the steps against it: which files, in which order, which commands validate each step. Agents follow examples far more reliably than rules.</p>
+  </div>
+</div>
+<div class="rec">
+  <div class="tag"><span class="chip now">Now</span><span class="rid">AGT-2</span></div>
+  <div>
+    <h4>Decision records</h4>
+    <p class="where">.project/decisions/NNNN-title.md</p>
+    <p>Choices such as "no third-party orchestrator", "JSON-compatible YAML", "pnpm 11", and the coming auth and API-style decisions live only in prose and commit titles. A short record per decision with context, choice, and consequences stops later sessions from re-litigating them.</p>
+  </div>
+</div>
+<div class="rec">
+  <div class="tag"><span class="chip now">Now</span><span class="rid">AGT-3</span></div>
+  <div>
+    <h4>Evidence behind state claims</h4>
+    <p class="where">.project/PROJECT-STATE.md</p>
+    <p>The state document lists validations, including CI behaviour, that were not observed. Require each "Validated" line to cite a command and its result, or a CI run link, so the document stays a record rather than an intention.</p>
+  </div>
+</div>
+<div class="rec">
+  <div class="tag"><span class="chip next">Next</span><span class="rid">AGT-4</span></div>
+  <div>
+    <h4>Harness configuration committed to the repo</h4>
+    <p class="where">.claude/settings.json · .claude/skills</p>
+    <p>Allow-list the read-only repository CLI commands, add a hook that runs <code>repo check</code> after edits under <code>codebase/</code>, and package the feature playbook and the milestone record step as project skills so every session follows them the same way.</p>
+  </div>
+</div>
+</section>
+
+<section id="slice">
+<h2>First vertical slice</h2>
+<p>M03.3 should be scoped to prove the conventions, not only to ship authentication. A slice that touches each layer once becomes the template every later feature copies.</p>
+<div class="slice">
+<section>
+  <h4>Contract</h4>
+  <ul>
+    <li>Sign-up and sign-in schemas in <code>packages/validation/auth</code></li>
+    <li>Inferred types, no parallel definitions</li>
+    <li>Problem-detail error codes for auth failures</li>
+    <li>Decision record for the session model</li>
+  </ul>
+</section>
+<section>
+  <h4>Server</h4>
+  <ul>
+    <li><code>features/auth</code> with route, service, repository, model</li>
+    <li>Request context carrying the principal</li>
+    <li>Rate limit on the auth routes</li>
+    <li>First migration and index</li>
+  </ul>
+</section>
+<section>
+  <h4>Web</h4>
+  <ul>
+    <li><code>features/auth</code> with forms bound to the shared schemas</li>
+    <li><code>(public)</code> and <code>(app)</code> route groups with a guard</li>
+    <li>Server-only API client</li>
+    <li>Authenticated application shell</li>
+  </ul>
+</section>
+<section>
+  <h4>Proof</h4>
+  <ul>
+    <li>Service unit tests with fake repositories</li>
+    <li>Repository test against a real database</li>
+    <li>Form component test with Testing Library</li>
+    <li>One Playwright journey from sign-up to shell</li>
+    <li>A feature playbook written from the result</li>
+  </ul>
+</section>
+</div>
+</section>
+
+<section id="dont">
+<h2>Deliberately not recommended</h2>
+<p>Things a generic enterprise checklist would suggest that would contradict this repository's principles or add cost without a current trigger.</p>
+<ul class="dont">
+  <li><b>A third-party monorepo orchestrator.</b> The custom control plane is a deliberate choice; fix its cache and affected logic instead.</li>
+  <li><b>Microservices or a message broker now.</b> One API and, later, one worker cover the foreseeable load. Split when a team or scaling boundary actually appears.</li>
+  <li><b>GraphQL.</b> One first-party client and no aggregation need; a schema-first REST or RPC contract is cheaper.</li>
+  <li><b>A dependency-injection container or class-based services.</b> Explicit dependency objects already give testability.</li>
+  <li><b>Empty scaffolding.</b> No empty <code>packages/validation</code>, <code>servers/worker</code>, or role folders before their trigger.</li>
+  <li><b>Kubernetes as a first deploy target.</b> A managed container platform is enough until there are several services to schedule.</li>
+  <li><b>Changesets or package publishing.</b> Every package is private and consumed through the workspace protocol.</li>
+</ul>
+<p class="note">This review is forward-looking and does not repeat the defects in the companion audit. Fixing that audit's Critical items, especially the CI pipeline and the UI package build, comes before any recommendation here.</p>
+</section>
+</main>
+</div>
+</div>
+</body>
+</html>

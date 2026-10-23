@@ -1,0 +1,1053 @@
+openapi: 3.1.0
+info:
+  title: Automation management API
+  version: 1.0.0
+  license:
+    name: Proprietary
+    identifier: Proprietary
+servers:
+  - url: /
+    description: Current host
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  parameters:
+    WorkspaceId:
+      name: workspaceId
+      in: path
+      required: true
+      schema:
+        type: string
+    AutomationId:
+      name: automationId
+      in: path
+      required: true
+      schema:
+        type: string
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      description: Current automation revision, for example "3".
+      schema:
+        type: string
+        pattern: '^"?[0-9]{1,15}"?$'
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 200
+  responses:
+    LifecycleOk:
+      description: Transition applied; the new revision is also returned as ETag
+      headers:
+        ETag:
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AutomationResponse"
+    LifecycleInvalidRequest:
+      description: Missing/invalid If-Match header
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    LifecycleUnauthenticated:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    LifecycleNotFound:
+      description: Automation not found, not discoverable, or permission denied
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    LifecycleConflict:
+      description: >-
+        AUTOMATION_REVISION_CONFLICT (stale or already-used revision),
+        AUTOMATION_INVALID_TRANSITION, or AUTOMATION_NOT_PUBLISHED
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    LifecycleUnavailable:
+      description: Service unavailable (e.g. auth adapter not configured)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    LifecycleUnexpected:
+      description: Unexpected failure without internal details
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    RecoveryError:
+      description: >-
+        Invalid request; run recovery blocked (AUTOMATION_RUN_RECOVERY_BLOCKED), not retryable,
+        stale revision, or request in progress (409); Idempotency-Key reused with a different
+        payload (422)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+  schemas:
+    Automation:
+      type: object
+      required: [automationId, name, status, revision, createdAt, updatedAt, draft]
+      properties:
+        automationId:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum: [draft, enabled, paused, disabled, archived]
+        revision:
+          type: integer
+          minimum: 0
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        draft: {}
+    AutomationSummary:
+      type: object
+      required: [automationId, name, status, revision, createdAt, updatedAt]
+      properties:
+        automationId:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum: [draft, enabled, paused, disabled, archived]
+        revision:
+          type: integer
+          minimum: 0
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    AutomationResponse:
+      type: object
+      required: [automation]
+      properties:
+        automation:
+          $ref: "#/components/schemas/Automation"
+    AutomationPage:
+      type: object
+      required: [automations, nextCursor]
+      properties:
+        automations:
+          type: array
+          items:
+            $ref: "#/components/schemas/AutomationSummary"
+        nextCursor:
+          type: [string, "null"]
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            path:
+              type: string
+    AutomationValidationIssue:
+      type: object
+      required: [code, path, message]
+      properties:
+        code:
+          type: string
+          enum:
+            - AUTOMATION_INVALID_RULE
+            - AUTOMATION_INVALID_TRIGGER
+            - AUTOMATION_INVALID_CONDITION
+            - AUTOMATION_INVALID_ACTION
+            - AUTOMATION_LIMIT_EXCEEDED
+        path:
+          type: string
+        message:
+          type: string
+    AutomationValidationResponse:
+      type: object
+      required: [valid, errors]
+      properties:
+        valid:
+          type: boolean
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/AutomationValidationIssue"
+    DryRunRequest:
+      type: object
+      additionalProperties: false
+      required: [sample]
+      properties:
+        sample:
+          type: object
+          additionalProperties: false
+          required: [task]
+          properties:
+            task:
+              type: object
+              additionalProperties: false
+              properties:
+                status:
+                  type: string
+                  minLength: 1
+                previousStatus:
+                  type: string
+                  minLength: 1
+                priority:
+                  type: string
+                  enum: [low, medium, high, urgent]
+                isArchived:
+                  type: boolean
+    DryRunConditionExplanation:
+      type: object
+      required: [kind, path, result]
+      properties:
+        kind:
+          type: string
+          enum: [predicate, group]
+        group:
+          type: string
+          enum: [all, any, not]
+        path:
+          type: string
+        result:
+          type: string
+          enum: [matched, not_matched, evaluation_error]
+        field:
+          type: string
+        op:
+          type: string
+        expected: {}
+        actual: {}
+        actualPresent:
+          type: boolean
+        message:
+          type: [string, "null"]
+        children:
+          type: array
+          items:
+            $ref: "#/components/schemas/DryRunConditionExplanation"
+    DryRunActionPlan:
+      type: object
+      required: [index, type, schemaVersion, sideEffect, requiredPermission, onStale, wouldExecute, config]
+      properties:
+        index:
+          type: integer
+          minimum: 0
+        type:
+          type: string
+        schemaVersion:
+          type: integer
+        sideEffect:
+          type: string
+        requiredPermission:
+          type: string
+        onStale:
+          type: string
+          enum: [skip]
+        wouldExecute:
+          type: boolean
+        config: {}
+    DryRunPreview:
+      type: object
+      required: [trigger, conditions, actions, limitations, sideEffects]
+      properties:
+        trigger:
+          type: object
+          required: [type, matched, reason]
+          properties:
+            type:
+              type: string
+            matched:
+              type: [boolean, "null"]
+            reason:
+              type: string
+        conditions:
+          type: object
+          required: [result, explanation]
+          properties:
+            result:
+              type: string
+              enum: [matched, not_matched, evaluation_error]
+            explanation:
+              $ref: "#/components/schemas/DryRunConditionExplanation"
+        actions:
+          type: array
+          items:
+            $ref: "#/components/schemas/DryRunActionPlan"
+        limitations:
+          type: array
+          items:
+            type: string
+        sideEffects:
+          type: string
+          enum: [none]
+    DryRunResponse:
+      type: object
+      required: [valid, errors, preview]
+      properties:
+        valid:
+          type: boolean
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/AutomationValidationIssue"
+        preview:
+          oneOf:
+            - $ref: "#/components/schemas/DryRunPreview"
+            - type: "null"
+    RunFailure:
+      type: object
+      required: [reason, attempts, firstAttemptAt, deadLetteredAt]
+      properties:
+        reason:
+          type: string
+        attempts:
+          type: integer
+          minimum: 1
+        firstAttemptAt:
+          type: string
+          format: date-time
+        deadLetteredAt:
+          type: string
+          format: date-time
+        failureCode:
+          type: string
+        errorClass:
+          type: string
+          enum: [transient, permanent, ambiguous]
+        actionIndex:
+          type: integer
+          minimum: 0
+    RunSummary:
+      type: object
+      required: [runId, revision, eventId, automationId, version, contentHash, status, createdAt, updatedAt]
+      properties:
+        runId:
+          type: string
+        revision:
+          type: integer
+          minimum: 0
+        eventId:
+          type: string
+        automationId:
+          type: string
+        version:
+          type: integer
+          minimum: 1
+        contentHash:
+          type: string
+        status:
+          type: string
+          enum: [queued, running, retry_wait, completed, failed, cancelled, skipped, dead_letter]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        interruptedReason:
+          type: string
+        skipReason:
+          type: string
+        failure:
+          $ref: "#/components/schemas/RunFailure"
+        replayOf:
+          type: string
+    RunAction:
+      type: object
+      required: [actionIndex, attempt, status, createdAt, updatedAt]
+      properties:
+        actionIndex:
+          type: integer
+          minimum: 0
+        attempt:
+          type: integer
+          minimum: 1
+        status:
+          type: string
+          enum: [pending, running, succeeded, failed, skipped, unknown_outcome]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        actionType:
+          type: string
+    RunDetail:
+      allOf:
+        - $ref: "#/components/schemas/RunSummary"
+        - type: object
+          required: [runAfter, attemptCount, actions]
+          properties:
+            runAfter:
+              type: string
+              format: date-time
+            attemptCount:
+              type: integer
+              minimum: 0
+            actions:
+              type: array
+              items:
+                $ref: "#/components/schemas/RunAction"
+    RunPage:
+      type: object
+      required: [runs, nextCursor]
+      properties:
+        runs:
+          type: array
+          items:
+            $ref: "#/components/schemas/RunSummary"
+        nextCursor:
+          type: [string, "null"]
+    RunResponse:
+      type: object
+      required: [run]
+      properties:
+        run:
+          $ref: "#/components/schemas/RunDetail"
+    RecoveryRequest:
+      type: object
+      additionalProperties: false
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+        confirmedActionIndexes:
+          type: array
+          maxItems: 10
+          items:
+            type: integer
+            minimum: 0
+    RecoveryResponse:
+      type: object
+      required: [recovery]
+      properties:
+        recovery:
+          type: object
+          required: [operation, runId, idempotentReplay]
+          properties:
+            operation:
+              type: string
+              enum: [retry, replay]
+            runId:
+              type: string
+            revision:
+              type: integer
+            replayRunId:
+              type: string
+            idempotentReplay:
+              type: boolean
+paths:
+  /api/v1/workspaces/{workspaceId}/automations:
+    post:
+      summary: Create an automation draft
+      operationId: createAutomationDraft
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 200
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [name, draft]
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 120
+                  pattern: "\\S"
+                draft: {}
+      responses:
+        "201":
+          description: Draft created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationResponse"
+        "200":
+          description: Idempotent replay of the created draft
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Workspace unavailable or resource not discoverable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: Idempotency key conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
+          description: Unexpected failure without internal details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Service unavailable (e.g. auth adapter not configured)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    get:
+      summary: List automation drafts in a workspace
+      operationId: listAutomationDrafts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: cursor
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Workspace-scoped automation page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationPage"
+        "400":
+          description: Invalid pagination
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Workspace unavailable or resource not discoverable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
+          description: Unexpected failure without internal details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Service unavailable (e.g. auth adapter not configured)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /api/v1/workspaces/{workspaceId}/automations/validate:
+    post:
+      summary: Validate an automation rule draft
+      operationId: validateAutomationDraft
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [draft]
+              properties:
+                draft: {}
+      responses:
+        "200":
+          description: Draft validation result with stable error codes and JSON-pointer paths
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationValidationResponse"
+        "400":
+          description: Malformed request or resource bound exceeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Workspace unavailable or validation permission denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
+          description: Unexpected failure without internal details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Service unavailable (e.g. auth adapter not configured)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /api/v1/workspaces/{workspaceId}/automations/{automationId}:
+    get:
+      summary: Read an automation draft by ID
+      operationId: readAutomationDraft
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: automationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Workspace-scoped automation draft
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Resource not found or not discoverable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
+          description: Unexpected failure without internal details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Service unavailable (e.g. auth adapter not configured)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /api/v1/workspaces/{workspaceId}/automations/{automationId}/enable:
+    post:
+      summary: Enable a published automation (draft or disabled to enabled)
+      description: Requires a published version. New trigger matching starts after success.
+      operationId: enableAutomation
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/WorkspaceId"
+        - $ref: "#/components/parameters/AutomationId"
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200": { $ref: "#/components/responses/LifecycleOk" }
+        "400": { $ref: "#/components/responses/LifecycleInvalidRequest" }
+        "401": { $ref: "#/components/responses/LifecycleUnauthenticated" }
+        "404": { $ref: "#/components/responses/LifecycleNotFound" }
+        "409": { $ref: "#/components/responses/LifecycleConflict" }
+        "500": { $ref: "#/components/responses/LifecycleUnexpected" }
+        "503": { $ref: "#/components/responses/LifecycleUnavailable" }
+  /api/v1/workspaces/{workspaceId}/automations/{automationId}/pause:
+    post:
+      summary: Pause an enabled automation
+      description: New trigger matching stops; run cancellation policy (D-20) is handled by the run worker.
+      operationId: pauseAutomation
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/WorkspaceId"
+        - $ref: "#/components/parameters/AutomationId"
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200": { $ref: "#/components/responses/LifecycleOk" }
+        "400": { $ref: "#/components/responses/LifecycleInvalidRequest" }
+        "401": { $ref: "#/components/responses/LifecycleUnauthenticated" }
+        "404": { $ref: "#/components/responses/LifecycleNotFound" }
+        "409": { $ref: "#/components/responses/LifecycleConflict" }
+        "500": { $ref: "#/components/responses/LifecycleUnexpected" }
+        "503": { $ref: "#/components/responses/LifecycleUnavailable" }
+  /api/v1/workspaces/{workspaceId}/automations/{automationId}/resume:
+    post:
+      summary: Resume a paused automation
+      operationId: resumeAutomation
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/WorkspaceId"
+        - $ref: "#/components/parameters/AutomationId"
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200": { $ref: "#/components/responses/LifecycleOk" }
+        "400": { $ref: "#/components/responses/LifecycleInvalidRequest" }
+        "401": { $ref: "#/components/responses/LifecycleUnauthenticated" }
+        "404": { $ref: "#/components/responses/LifecycleNotFound" }
+        "409": { $ref: "#/components/responses/LifecycleConflict" }
+        "500": { $ref: "#/components/responses/LifecycleUnexpected" }
+        "503": { $ref: "#/components/responses/LifecycleUnavailable" }
+  /api/v1/workspaces/{workspaceId}/automations/{automationId}/disable:
+    post:
+      summary: Disable an enabled or paused automation
+      operationId: disableAutomation
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/WorkspaceId"
+        - $ref: "#/components/parameters/AutomationId"
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200": { $ref: "#/components/responses/LifecycleOk" }
+        "400": { $ref: "#/components/responses/LifecycleInvalidRequest" }
+        "401": { $ref: "#/components/responses/LifecycleUnauthenticated" }
+        "404": { $ref: "#/components/responses/LifecycleNotFound" }
+        "409": { $ref: "#/components/responses/LifecycleConflict" }
+        "500": { $ref: "#/components/responses/LifecycleUnexpected" }
+        "503": { $ref: "#/components/responses/LifecycleUnavailable" }
+  /api/v1/workspaces/{workspaceId}/automations/{automationId}/archive:
+    post:
+      summary: Archive a disabled automation
+      operationId: archiveAutomation
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/WorkspaceId"
+        - $ref: "#/components/parameters/AutomationId"
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200": { $ref: "#/components/responses/LifecycleOk" }
+        "400": { $ref: "#/components/responses/LifecycleInvalidRequest" }
+        "401": { $ref: "#/components/responses/LifecycleUnauthenticated" }
+        "404": { $ref: "#/components/responses/LifecycleNotFound" }
+        "409": { $ref: "#/components/responses/LifecycleConflict" }
+        "500": { $ref: "#/components/responses/LifecycleUnexpected" }
+        "503": { $ref: "#/components/responses/LifecycleUnavailable" }
+  /api/v1/workspaces/{workspaceId}/automations/{automationId}/dry-run:
+    post:
+      summary: Preview the draft against a sample without side effects
+      description: >-
+        Evaluates the draft with the same evaluator and bounds as real execution and returns
+        trigger and condition outcomes plus planned actions. No action handler is invoked and
+        nothing is written.
+      operationId: dryRunAutomation
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: automationId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DryRunRequest"
+      responses:
+        "200":
+          description: Preview, or validation errors when the stored draft is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DryRunResponse"
+        "400":
+          description: Invalid request or sample exceeds resource bounds
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Automation not found, not discoverable, or permission denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
+          description: Unexpected failure without internal details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Service unavailable (e.g. auth adapter not configured)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /api/v1/workspaces/{workspaceId}/automations/{automationId}/runs:
+    get:
+      summary: List run history for an automation (newest first)
+      description: Ordered by createdAt then runId, both descending; cursor pagination is stable while new runs arrive.
+      operationId: listAutomationRuns
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/WorkspaceId"
+        - $ref: "#/components/parameters/AutomationId"
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: cursor
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Workspace-scoped run page with safe fields only
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunPage"
+        "400":
+          description: Invalid pagination
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Automation not found, not discoverable, or permission denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
+          description: Unexpected failure without internal details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Service unavailable (e.g. auth adapter not configured)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /api/v1/workspaces/{workspaceId}/automation-runs/{runId}:
+    get:
+      summary: Inspect a run with its pinned version and action attempts
+      operationId: readAutomationRun
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/WorkspaceId"
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Run detail with safe failure information
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Run not found, not discoverable, or permission denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
+          description: Unexpected failure without internal details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "503":
+          description: Service unavailable (e.g. auth adapter not configured)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /api/v1/workspaces/{workspaceId}/automation-runs/{runId}/retry:
+    post:
+      summary: Re-queue the same dead-lettered run (same effect keys)
+      description: Requires If-Match (run revision), Idempotency-Key, and a reason. Audited; blocked when reconciliation or confirmation is required.
+      operationId: retryAutomationRun
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/WorkspaceId"
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/IfMatch"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecoveryRequest"
+      responses:
+        "200":
+          description: Run re-queued (or the stored result of an earlier identical request)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecoveryResponse"
+        "400": { $ref: "#/components/responses/RecoveryError" }
+        "401": { $ref: "#/components/responses/LifecycleUnauthenticated" }
+        "404": { $ref: "#/components/responses/LifecycleNotFound" }
+        "409": { $ref: "#/components/responses/RecoveryError" }
+        "422": { $ref: "#/components/responses/RecoveryError" }
+        "500": { $ref: "#/components/responses/LifecycleUnexpected" }
+        "503": { $ref: "#/components/responses/LifecycleUnavailable" }
+  /api/v1/workspaces/{workspaceId}/automation-runs/{runId}/replay:
+    post:
+      summary: Create a new run linked to a failed or dead-lettered run
+      description: The new run has new effect keys and `replayOf` set to the source run. Same permission, reason, policy, and Idempotency-Key rules as retry.
+      operationId: replayAutomationRun
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/WorkspaceId"
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecoveryRequest"
+      responses:
+        "201":
+          description: Replay run created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecoveryResponse"
+        "200":
+          description: Stored result of an earlier identical request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecoveryResponse"
+        "400": { $ref: "#/components/responses/RecoveryError" }
+        "401": { $ref: "#/components/responses/LifecycleUnauthenticated" }
+        "404": { $ref: "#/components/responses/LifecycleNotFound" }
+        "409": { $ref: "#/components/responses/RecoveryError" }
+        "422": { $ref: "#/components/responses/RecoveryError" }
+        "500": { $ref: "#/components/responses/LifecycleUnexpected" }
+        "503": { $ref: "#/components/responses/LifecycleUnavailable" }

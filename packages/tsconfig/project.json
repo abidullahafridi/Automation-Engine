@@ -1,0 +1,9 @@
+{
+  "name": "tsconfig",
+  "type": "config",
+  "description": "Shared TypeScript compiler policy and runtime presets.",
+  "internalDependencies": [],
+  "externalDependencies": [],
+  "capabilities": ["typescript-configuration"],
+  "tasks": {}
+}
